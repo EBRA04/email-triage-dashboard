@@ -1,6 +1,23 @@
 @EmailTriage.Api_HostAddress = http://localhost:5074
 
-GET {{EmailTriage.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Login
+POST {{EmailTriage.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@company.test",
+  "password": "password123"
+}
+
+### Ingest + classify in one call
+POST {{EmailTriage.Api_HostAddress}}/api/ingestion/run?max=10
+
+### List departments
+GET {{EmailTriage.Api_HostAddress}}/api/departments
+Authorization: Bearer {{token}}
+
+### List tickets (department-scoped to the logged-in user)
+GET {{EmailTriage.Api_HostAddress}}/api/tickets
+Authorization: Bearer {{token}}
 
 ###
