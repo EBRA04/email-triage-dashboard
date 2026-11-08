@@ -1,7 +1,25 @@
+# Build artifacts
 **/bin/
 **/obj/
 **/node_modules/
 **/.vs/
+**/dist/
 *.user
+
+# Secrets / local config - never commit real values
 api/appsettings.Development.json
+api/appsettings.Production.json
+api/appsettings.Local.json
+.env
+.env.local
+*.pfx
+*.key
+
+# Gmail OAuth cached token
 .gmail-credentials/
+**/.gmail-credentials/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

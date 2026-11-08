@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: email-triage-db
+    environment:
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: email_triage
+    ports:
+      - "5433:5432"
+    volumes:
+      - email-triage-pgdata:/var/lib/postgresql/data
+
+volumes:
+  email-triage-pgdata:
