@@ -4,3 +4,4 @@
 **/.vs/
 *.user
 api/appsettings.Development.json
+.gmail-credentials/
