@@ -25,8 +25,15 @@ public class TicketsController : ControllerBase
     private Guid? CurrentDepartmentId =>
         Guid.TryParse(User.FindFirst("departmentId")?.Value, out var id) ? id : (Guid?)null;
 
-    private Guid CurrentUserId =>
-        Guid.Parse(User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!.Value);
+    private Guid CurrentUserId
+    {
+        get
+        {
+            var claim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)
+                ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            return Guid.Parse(claim!.Value);
+        }
+    }
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
