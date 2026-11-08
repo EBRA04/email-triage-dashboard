@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Triage Dashboard — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'JetBrains Mono', monospace; background: #020617; min-height: 100vh; padding: 2rem; color: white; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .header { margin-bottom: 2rem; }
+  .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+  .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+  .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+  .diagram-container { background: rgba(15, 23, 42, 0.5); border-radius: 1rem; border: 1px solid #1e293b; padding: 1.5rem; overflow-x: auto; }
+  svg { width: 100%; min-width: 1050px; display: block; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 2rem; }
+  .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+  .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .card-dot.cyan { background: #22d3ee; }
+  .card-dot.emerald { background: #34d399; }
+  .card-dot.violet { background: #a78bfa; }
+  .card-dot.amber { background: #fbbf24; }
+  .card-dot.rose { background: #fb7185; }
+  .card h3 { font-size: 0.875rem; font-weight: 600; }
+  .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+  .card li { margin-bottom: 0.375rem; }
+  .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>Email Triage Dashboard — Architecture</h1>
+    </div>
+    <p class="subtitle">Gmail inbox → AI classification → department-scoped dashboard, with full audit trail</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1100 820">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+        </marker>
+        <marker id="arrowhead-cyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
+        </marker>
+        <marker id="arrowhead-emerald" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#34d399" />
+        </marker>
+        <marker id="arrowhead-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24" />
+        </marker>
+        <marker id="arrowhead-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa" />
+        </marker>
+        <marker id="arrowhead-rose" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#fb7185" />
+        </marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+
+      <rect width="100%" height="100%" fill="url(#grid)" />
+
+      <!-- ============ BOUNDARY: .NET Backend ============ -->
+      <rect x="230" y="30" width="640" height="330" rx="12" fill="rgba(52, 211, 153, 0.04)" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="245" y="50" fill="#34d399" font-size="10" font-weight="600">ASP.NET Core Web API (C#)</text>
+
+      <!-- External: Gmail Inbox -->
+      <rect x="30" y="80" width="150" height="60" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="105" y="104" fill="white" font-size="11" font-weight="600" text-anchor="middle">Gmail Inbox</text>
+      <text x="105" y="120" fill="#94a3b8" font-size="9" text-anchor="middle">contact-us address</text>
+      <text x="105" y="132" fill="#94a3b8" font-size="8" text-anchor="middle">(real mailbox)</text>
+
+      <!-- Gmail Ingestion Service -->
+      <rect x="260" y="80" width="170" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="345" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">GmailIngestionService</text>
+      <text x="345" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">Gmail API + OAuth2</text>
+      <text x="345" y="130" fill="#94a3b8" font-size="8" text-anchor="middle">pulls inbox, dedupes</text>
+
+      <!-- Classification Service -->
+      <rect x="490" y="80" width="170" height="60" rx="6" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="575" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">ClassificationService</text>
+      <text x="575" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">builds prompt, parses JSON</text>
+      <text x="575" y="130" fill="#94a3b8" font-size="8" text-anchor="middle">confidence threshold logic</text>
+
+      <!-- External: Groq LLM -->
+      <rect x="700" y="80" width="150" height="60" rx="6" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="775" y="102" fill="white" font-size="11" font-weight="600" text-anchor="middle">Groq API</text>
+      <text x="775" y="118" fill="#94a3b8" font-size="9" text-anchor="middle">openai/gpt-oss-120b</text>
+      <text x="775" y="130" fill="#94a3b8" font-size="8" text-anchor="middle">department + confidence + summary</text>
+
+      <!-- arrows: gmail -> ingestion -> classification -> groq -->
+      <line x1="180" y1="110" x2="258" y2="110" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowhead-amber)"/>
+      <text x="219" y="104" fill="#94a3b8" font-size="8" text-anchor="middle">OAuth2</text>
+
+      <line x1="430" y1="110" x2="488" y2="110" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead-emerald)"/>
+      <text x="459" y="104" fill="#94a3b8" font-size="8" text-anchor="middle">unclassified</text>
+
+      <line x1="660" y1="110" x2="698" y2="110" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowhead-amber)"/>
+      <text x="679" y="104" fill="#94a3b8" font-size="7" text-anchor="middle">HTTPS</text>
+
+      <!-- ============ Postgres Database boundary ============ -->
+      <rect x="260" y="200" width="400" height="140" rx="12" fill="rgba(167, 139, 250, 0.05)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="275" y="220" fill="#a78bfa" font-size="10" font-weight="600">PostgreSQL (Docker)</text>
+
+      <!-- RawEmails table -->
+      <rect x="285" y="235" width="160" height="80" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="365" y="257" fill="white" font-size="11" font-weight="600" text-anchor="middle">RawEmails</text>
+      <text x="365" y="273" fill="#94a3b8" font-size="8" text-anchor="middle">immutable, never edited</text>
+      <text x="365" y="285" fill="#94a3b8" font-size="8" text-anchor="middle">"view original" source</text>
+      <text x="365" y="300" fill="#94a3b8" font-size="8" text-anchor="middle">of truth</text>
+
+      <!-- Tickets + AuditLogs table -->
+      <rect x="470" y="235" width="170" height="80" rx="6" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="555" y="255" fill="white" font-size="11" font-weight="600" text-anchor="middle">Tickets + AuditLogs</text>
+      <text x="555" y="271" fill="#94a3b8" font-size="8" text-anchor="middle">department, status, AI</text>
+      <text x="555" y="283" fill="#94a3b8" font-size="8" text-anchor="middle">confidence/summary,</text>
+      <text x="555" y="295" fill="#94a3b8" font-size="8" text-anchor="middle">every change logged</text>
+
+      <line x1="345" y1="140" x2="345" y2="233" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead-emerald)"/>
+      <text x="358" y="190" fill="#94a3b8" font-size="8">write</text>
+
+      <line x1="365" y1="235" x2="500" y2="142" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead-violet)"/>
+      <text x="420" y="190" fill="#94a3b8" font-size="8">read unclassified</text>
+
+      <line x1="575" y1="140" x2="555" y2="233" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowhead-emerald)"/>
+      <text x="600" y="190" fill="#94a3b8" font-size="8">write ticket + audit</text>
+
+      <!-- Tickets/Departments/Auth API -->
+      <rect x="285" y="420" width="560" height="70" rx="8" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="565" y="444" fill="white" font-size="12" font-weight="600" text-anchor="middle">REST Controllers: AuthController · TicketsController · DepartmentsController</text>
+      <text x="565" y="462" fill="#94a3b8" font-size="9" text-anchor="middle">JWT issuance, department-scoped queries, status/reassign/audit-log writes</text>
+      <text x="565" y="476" fill="#94a3b8" font-size="8" text-anchor="middle">SuperAdmin sees all · DeptAdmin/Agent see only their own department's tickets</text>
+
+      <line x1="365" y1="315" x2="400" y2="418" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead-violet)"/>
+      <line x1="555" y1="315" x2="600" y2="418" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowhead-violet)"/>
+      <text x="610" y="370" fill="#94a3b8" font-size="8">read/write via EF Core</text>
+
+      <!-- JWT security component -->
+      <rect x="880" y="420" width="150" height="70" rx="6" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="955" y="444" fill="white" font-size="11" font-weight="600" text-anchor="middle">JWT Bearer Auth</text>
+      <text x="955" y="460" fill="#94a3b8" font-size="8" text-anchor="middle">BCrypt password hash</text>
+      <text x="955" y="472" fill="#94a3b8" font-size="8" text-anchor="middle">role + departmentId claims</text>
+
+      <line x1="845" y1="455" x2="878" y2="455" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrowhead-rose)"/>
+
+      <!-- React Frontend -->
+      <rect x="285" y="560" width="300" height="100" rx="8" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="435" y="585" fill="white" font-size="12" font-weight="600" text-anchor="middle">React Dashboard (Vite)</text>
+      <text x="435" y="603" fill="#94a3b8" font-size="9" text-anchor="middle">Login → Dashboard (ticket list)</text>
+      <text x="435" y="617" fill="#94a3b8" font-size="9" text-anchor="middle">→ Ticket Detail</text>
+      <text x="435" y="632" fill="#94a3b8" font-size="8" text-anchor="middle">status update, department reassign,</text>
+      <text x="435" y="644" fill="#94a3b8" font-size="8" text-anchor="middle">"view original email" toggle</text>
+
+      <line x1="500" y1="558" x2="480" y2="492" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrowhead-cyan)"/>
+      <text x="520" y="525" fill="#94a3b8" font-size="8">fetch() + Bearer token</text>
+
+      <path d="M 850 490 L 850 525 Q 850 545 830 545 L 620 545 Q 600 545 600 558" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,5"/>
+      <text x="750" y="538" fill="#fb7185" font-size="8">JWT in Authorization header</text>
+
+      <!-- Department users -->
+      <rect x="700" y="560" width="330" height="100" rx="8" fill="rgba(30, 41, 59, 0.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="865" y="583" fill="white" font-size="11" font-weight="600" text-anchor="middle">Department Users</text>
+      <text x="865" y="602" fill="#94a3b8" font-size="8" text-anchor="middle">HR · IT · Marketing · Sales</text>
+      <text x="865" y="616" fill="#94a3b8" font-size="8" text-anchor="middle">each sees only their own queue</text>
+      <text x="865" y="630" fill="#94a3b8" font-size="8" text-anchor="middle">SuperAdmin sees every department</text>
+      <text x="865" y="644" fill="#94a3b8" font-size="8" text-anchor="middle">+ unassigned "needs review" tickets</text>
+
+      <line x1="698" y1="610" x2="587" y2="610" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="642" y="604" fill="#94a3b8" font-size="8" text-anchor="middle">browser</text>
+
+      <!-- Legend -->
+      <text x="900" y="200" fill="white" font-size="10" font-weight="600">Legend</text>
+      <rect x="900" y="212" width="16" height="10" rx="2" fill="rgba(8, 51, 68, 0.4)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="922" y="220" fill="#94a3b8" font-size="8">Frontend</text>
+      <rect x="900" y="228" width="16" height="10" rx="2" fill="rgba(6, 78, 59, 0.4)" stroke="#34d399" stroke-width="1"/>
+      <text x="922" y="236" fill="#94a3b8" font-size="8">Backend service</text>
+      <rect x="900" y="244" width="16" height="10" rx="2" fill="rgba(120, 53, 15, 0.3)" stroke="#fbbf24" stroke-width="1"/>
+      <text x="922" y="252" fill="#94a3b8" font-size="8">External API</text>
+      <rect x="900" y="260" width="16" height="10" rx="2" fill="rgba(76, 29, 149, 0.4)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="922" y="268" fill="#94a3b8" font-size="8">Database table</text>
+      <rect x="900" y="276" width="16" height="10" rx="2" fill="rgba(136, 19, 55, 0.4)" stroke="#fb7185" stroke-width="1"/>
+      <text x="922" y="284" fill="#94a3b8" font-size="8">Auth / security</text>
+      <line x1="900" y1="298" x2="916" y2="298" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="922" y="301" fill="#94a3b8" font-size="8">JWT-secured flow</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header"><div class="card-dot emerald"></div><h3>The pipeline</h3></div>
+      <ul>
+        <li>• Gmail API pulls inbox via OAuth2 (one-time consent, auto-refresh)</li>
+        <li>• Each unique email saved as an immutable RawEmail row</li>
+        <li>• Groq LLM classifies: department + confidence + summary + reasoning</li>
+        <li>• Confidence &lt; 60% or no department match → "Needs Review" queue</li>
+        <li>• Otherwise auto-routed into that department's ticket queue</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot rose"></div><h3>Security &amp; access</h3></div>
+      <ul>
+        <li>• Passwords stored as BCrypt hashes, never plaintext</li>
+        <li>• JWT bearer tokens carry role + departmentId claims</li>
+        <li>• API filters every query by the caller's department</li>
+        <li>• SuperAdmin role bypasses the filter to see everything</li>
+        <li>• Gmail/Groq secrets kept in git-ignored config, never committed</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot violet"></div><h3>Auditability</h3></div>
+      <ul>
+        <li>• RawEmail rows are never edited — always the ground truth</li>
+        <li>• Every status change, reassignment, and AI classification</li>
+        <li>  is written to an append-only AuditLog tied to its ticket</li>
+        <li>• "View original email" in the UI replays the raw source</li>
+        <li>• Full trail: who/what changed a ticket, and when</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">
+    Email Triage Dashboard • ASP.NET Core 10 + EF Core + PostgreSQL · React 19 + Vite · Groq (openai/gpt-oss-120b) · Gmail API
+  </p>
+</div>
+</body>
+</html>
